@@ -20,3 +20,9 @@
   height: 100vh;
   padding: 16px;
 }
+
+@media scree and (max-width) {
+  .file-explorer {}
+
+  .content-viewer {}
+}

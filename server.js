@@ -3,11 +3,14 @@ const path = require('path');
 const utils = require('./utils');
 const sse = require('./sse');
 const fs = require('fs');
+const Tail = require('nodejs-tail');
+const _ = require('underscore');
 
 const app = express();
 const BASE_DIR = path.join(__dirname, './demo-files');
 
 let connections = [];
+let files = [];
 
 app.use('/static', express.static(path.join(__dirname, './build/static')));
 
@@ -26,12 +29,36 @@ app.get('/get-dir-tree', function(req, res) {
 });
 
 app.get('/get-file', function(req, res) {
-  res.sendFile(req.query.filepath);
+  const filepath = req.query.filepath;
+  const tail = new Tail(filepath);
+  tail.on('line', line => {
+    
+    for (const connection of connections) {
+      connection.sseSend({
+        filepath: filepath,
+        diff: line,
+        type: 'tail'
+      })
+    }
+    /*
+    res.sseSend({
+      filepath: filepath,
+      diff: line,
+      type: 'tail'
+    })
+    */
+  })
+  tail.watch();
+  console.log('here here');
+  res.sendFile(filepath);
+  
 });
 
 app.get('/stream', function(req, res) {
   res.sseSetup();
-  connections.push(res);
+  if(_.indexOf(connections, res) < 0) {
+    connections.push(res);
+  }
   res.sseSend('hello');
 });
 

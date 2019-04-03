@@ -12,46 +12,37 @@ class ContentViewer extends Component {
   }
 
   componentDidMount() {
+    let currentComponent = this;
     this.eventSource.onmessage = e => {
       let eventData = JSON.parse(e.data);
-      if (eventData.event === "change" && eventData.filename === this.props.fileInfo.filepath) {
-        let currentComponent = this;
-        fetch(`/get-file?filepath=${this.props.fileInfo.filepath}`)
-        .then(res => {
-          if(res.ok) {
-            return res.text()
-          }
-        })
-        .then(text => {
-          currentComponent.setState({
-            content: text
-          });
-        })
-        .catch(err => {
-          console.log(err);
-        })
+      console.log(eventData);
+      if (eventData.type === 'tail' && eventData.filepath === this.props.fileInfo.filepath) {
+        let newContent = this.state.content.concat(eventData.diff)
+        currentComponent.setState({ content: newContent });
       }
     }
   }
 
   componentDidUpdate(prevProps, prevState) {
-    let currentComponent = this;
-    fetch(`/get-file?filepath=${this.props.fileInfo.filepath}`)
-    .then(res => {
-      if(res.ok) {
-        return res.text()
-      }
-    })
-    .then(text => {
-      if(prevState.content !== text) {
-        currentComponent.setState({
-          content: text
-        });
-      }
-    })
-    .catch(err => {
-      console.log(err);
-    })
+    if (this.props.fileInfo.filepath !== prevProps.fileInfo.filepath) {
+      let currentComponent = this;
+      fetch(`/get-file?filepath=${this.props.fileInfo.filepath}`)
+      .then(res => {
+        if(res.ok) {
+          return res.text()
+        }
+      })
+      .then(text => {
+        if(prevState.content !== text) {
+          currentComponent.setState({
+            content: text
+          });
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      })
+    }
   }
 
   render() {

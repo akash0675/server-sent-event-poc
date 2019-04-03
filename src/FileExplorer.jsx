@@ -66,7 +66,6 @@ class FileExplorer extends Component {
   render() {
     return (
       <div className="file-explorer">
-        <div className=""> </div>
       {
         this.state.dirTree &&
         <Tree
